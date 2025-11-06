@@ -11,12 +11,14 @@ def generateChamber(ammo):
     return chamber
 
 def playerAction(player, bot):
-    displayHealth(player, bot)
-    choice = input("Do you want to shoot yourself or the dealer? (self/dealer): ").lower()
     if not chamber:
         print("The chamber is empty! Reloading...")
         chamber.extend(generateChamber(5))
-        sleepy(2)
+        print("BEWARE!!!  current chamber has ",sorted(chamber))
+        sleepy(3)
+
+    displayHealth(player, bot)
+    choice = input("Do you want to shoot yourself or the dealer? (self/dealer): ").lower()
 
     switch_turn = True
     current_shell = chamber.pop(0)
@@ -43,11 +45,15 @@ def playerAction(player, bot):
     return switch_turn
 
 def botAction(bot, player):
-    displayHealth(bot, player)
     if not chamber:
         print("The chamber is empty! Reloading...")
         chamber.extend(generateChamber(5))
-        sleepy(2)
+        print("BEWARE!!!  current chamber has ",sorted(chamber))
+        sleepy(3)
+        clear()
+
+    displayHealth(bot, player)
+
     bot_choice = random.choice(["self", 'player'])
     current_shell = chamber.pop(0)
     if len(chamber) < 2 and current_shell == 'live':
@@ -112,6 +118,8 @@ def Game():
     round()
 
 
+# MAIN GAME LOGIC
+
 clear()
 print("Welcome to Buckshot roulette")
 play = input("Play again bot Y for yes and any other button to quit: ")
@@ -119,6 +127,14 @@ if play.lower() == 'y':
     sleepy(0.5)
     print("Let's play some buckshot roulette") 
     name = input("Please enter Name: ")
+    while name == ''.strip():
+        clear()
+        print("Invalid input")
+        sleepy(1.2)
+
+        print("Please enter a valid input")
+        name = input("Please enter Name: ")
+
     player1 = participant(name)
     bot = participant()
     sleepy(2)
@@ -142,6 +158,12 @@ if play.lower() == 'y':
             sleepy(3)
             if switch:
                 player1.turn_flag = not player1.turn_flag
+    
+    if  player1.isAlive:
+        print("-------YOU WIN!!!!!!----------")
+    else:
+        print("------YOU LOSE!!!------")
+
 
             
         
