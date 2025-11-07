@@ -3,6 +3,16 @@ import time
 import random
 
 
+def generateItems(x):
+    items = ["Metal detector",'2X damage', "Extra life",'Inverter','Burner phone']
+    SelectedItems = []
+
+    for i in range(x):
+        pickedItem = random.choice(items)
+        SelectedItems.append(pickedItem)
+    return SelectedItems
+
+
 def generateChamber(ammo):
     chamber = ['live', 'blank']
     while len(chamber) < ammo:
@@ -16,26 +26,78 @@ def playerAction(player, bot):
         chamber.extend(generateChamber(5))
         print("BEWARE!!!  current chamber has ",sorted(chamber))
         sleepy(3)
+        if len(player1.inventory) < 5:
+            newItems = generateItems(2)
+            player1.inventory.extend(newItems)
+        clear()
 
     displayHealth(player, bot)
-    choice = input("Do you want to shoot yourself or the dealer? (self/dealer): ").lower()
+    print(f"Your current items: {player1.inventory}")
+    choice = input("Do you want to shoot yourself, the dealer or use an item ? (self/dealer): ").lower()
 
-    switch_turn = True
-    current_shell = chamber.pop(0)
-    print(f"\nBang! The shell was {current_shell.upper()}!")
-    sleepy(1)
+    if choice == "item":
+        useItem = input("To select an item enter the first letter of the item: ")
+        match useItem.upper():
+            case "M":
+                if "Metal detector" in player1.inventory:
+                     print("Metal detector")
+                     player1.inventory.remove("Metal detector")
+                else:
+                    print("You don't have that item")
+    
+            case "B":
+                if "Burner phone" in player1.inventory:
+                    print("Burner phone")
+                    player1.inventory.remove("Burner phone")
+                else:
+                    print("You don't have that item")
 
-    if current_shell == "live":
-        if choice == "self":
+            case "2":
+                if "2X damage" in player1.inventory:
+                    print("Double damage")
+                    player1.inventory.remove("2X damage")
+                else:
+                    print("You don't have that item")
+
+            case "E":
+                if "Extra life" in player1.inventory:
+                    print("Extra life")
+                    player1.inventory.remove("Extra life")
+                else:
+                    print("You don't have that item")
+                
+            case "I":     
+                if "Inverter" in player1.inventory:
+                    print("Inverter")
+                    player1.inventory.remove("Inverter")
+                else:
+                    print("You don't have that item")
+        sleepy(3)
+        playerAction(player, bot)
+    
+
+
+    current_shell = chamber[0]
+    switch_turn = True    
+
+    if choice == "self":
+        if current_shell == "live":
             player.life -= 1
+            print(f"\nBang! The shell was {current_shell.upper()}!")
             print(f"\n💀 You got hit!")
+            chamber.pop(0)
+            sleepy(1)
         else:
             bot.life -= 1
             print(f"\n💀 {bot.name} got hit!")
-    else:
+    elif choice == "dealer":
         print("\nClick... blank shell.")
         if choice == 'self':
             switch_turn = False
+    else:
+        print("Wrong input")
+        sleepy(2)
+        playerAction(player, bot)
 
     # Update alive status
     if player.life <= 0:
@@ -137,6 +199,7 @@ if play.lower() == 'y':
 
     player1 = participant(name)
     bot = participant()
+    player1.inventory = generateItems(1)
     sleepy(2)
     clear()
     chamber = generateChamber(5)
