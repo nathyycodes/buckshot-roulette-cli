@@ -3,6 +3,23 @@ import time
 import random
 
 
+# ITEM LOGIC
+def useExtralife():
+    player1.heal(1)
+
+def useMetalDetector():
+    currentRound = chamber[0]
+    print(f"The Current Round is a {currentRound}")
+
+def useInverter():
+    currentRound = chamber[0]
+    if currentRound == 'live':
+        chamber[0] = "blank"
+    else:
+        chamber[0] = 'live'
+    print("the type of the current shell in the chamber has been inverted.")
+    sleepy(3)
+
 def generateItems(x):
     items = ["Metal detector",'2X damage', "Extra life",'Inverter','Burner phone']
     SelectedItems = []
@@ -42,6 +59,7 @@ def playerAction(player, bot):
                 if "Metal detector" in player1.inventory:
                      print("Metal detector")
                      player1.inventory.remove("Metal detector")
+                     useMetalDetector()
                 else:
                     print("You don't have that item")
     
@@ -56,6 +74,7 @@ def playerAction(player, bot):
                 if "2X damage" in player1.inventory:
                     print("Double damage")
                     player1.inventory.remove("2X damage")
+                    
                 else:
                     print("You don't have that item")
 
@@ -63,6 +82,7 @@ def playerAction(player, bot):
                 if "Extra life" in player1.inventory:
                     print("Extra life")
                     player1.inventory.remove("Extra life")
+                    useExtralife()
                 else:
                     print("You don't have that item")
                 
@@ -70,6 +90,7 @@ def playerAction(player, bot):
                 if "Inverter" in player1.inventory:
                     print("Inverter")
                     player1.inventory.remove("Inverter")
+                    useInverter()
                 else:
                     print("You don't have that item")
         sleepy(3)
@@ -86,14 +107,16 @@ def playerAction(player, bot):
             print(f"\nBang! The shell was {current_shell.upper()}!")
             print(f"\n💀 You got hit!")
             chamber.pop(0)
-            sleepy(1)
+            sleepy(2)
         else:
-            bot.life -= 1
-            print(f"\n💀 {bot.name} got hit!")
+            print(f"\nBang! The shell was {current_shell.upper()}!")
+            print("Lucky you")
+            sleepy(2)
     elif choice == "dealer":
-        print("\nClick... blank shell.")
-        if choice == 'self':
-            switch_turn = False
+        if current_shell == "live":
+            bot.life -=  1
+            print(f"\nBang! The shell was {current_shell.upper()}!")
+            print(f"\n💀 {bot.name} got hit!")
     else:
         print("Wrong input")
         sleepy(2)
@@ -154,6 +177,9 @@ class participant:
         self.record = 0
         self.isAlive = True 
         self.turn_flag = True
+ 
+    def heal(self, amount):
+        self.life += amount
 
 def displayHealth(player, opp):
     clear()
