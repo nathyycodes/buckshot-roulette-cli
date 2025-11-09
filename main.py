@@ -2,6 +2,33 @@ import os
 import time
 import random
 
+#HELPER FUNCTIONS
+def displayChamber(chamber):
+    live_count = chamber.count('live')
+    blank_count = chamber.count('blank')
+    print(f"BEWARE!!! Current chamber contains: {live_count} live bullet(s) and {blank_count} blank(s)")
+
+def clear():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def sleepy(x):
+    time.sleep(x)
+
+def reloadChamber():
+    global chamber, player1
+    if not chamber:
+        print("The chamber is empty! Reloading...")
+        chamber.extend(generateChamber(5))
+        displayChamber(chamber)
+        sleepy(2)
+        
+        # Give items to player if inventory < 5
+        if len(player1.inventory) < 5:
+            new_items = generateItems(2)
+            player1.inventory.extend(new_items)
+            print(f"You received new items: {new_items}")
+            sleepy(2)
+
 
 # ITEM LOGIC
 def useExtralife():
@@ -19,6 +46,17 @@ def useInverter():
         chamber[0] = 'live'
     print("the type of the current shell in the chamber has been inverted.")
     sleepy(3)
+
+def useBurnerPhone():
+    if len(chamber) > 2:
+        randomItem = random.randrange(0, len(chamber))
+        print(f"The {randomItem+ 1} bullet is a {chamber[randomItem]}!!")
+        sleepy(2)
+    else:
+        print("You just wasted a valuable item!!")
+        sleepy(2)
+
+
 
 def generateItems(x):
     items = ["Metal detector",'2X damage', "Extra life",'Inverter','Burner phone']
@@ -38,133 +76,132 @@ def generateChamber(ammo):
     return chamber
 
 def playerAction(player, bot):
-    if not chamber:
-        print("The chamber is empty! Reloading...")
-        chamber.extend(generateChamber(5))
-        print("BEWARE!!!  current chamber has ",sorted(chamber))
-        sleepy(3)
-        if len(player1.inventory) < 5:
-            newItems = generateItems(2)
-            player1.inventory.extend(newItems)
-        clear()
+    global chamber
+    while True:
+        displayHealth(player, bot)
+        print(f"Your current items: {player.inventory}")
+        choice = input("Do you want to shoot yourself, the dealer or use an item? (self/dealer/item): ").lower()
 
-    displayHealth(player, bot)
-    print(f"Your current items: {player1.inventory}")
-    choice = input("Do you want to shoot yourself, the dealer or use an item ? (self/dealer): ").lower()
-
-    if choice == "item":
-        useItem = input("To select an item enter the first letter of the item: ")
-        match useItem.upper():
-            case "M":
-                if "Metal detector" in player1.inventory:
-                     print("Metal detector")
-                     player1.inventory.remove("Metal detector")
-                     useMetalDetector()
-                else:
-                    print("You don't have that item")
-    
-            case "B":
-                if "Burner phone" in player1.inventory:
-                    print("Burner phone")
-                    player1.inventory.remove("Burner phone")
-                else:
-                    print("You don't have that item")
-
-            case "2":
-                if "2X damage" in player1.inventory:
-                    print("Double damage")
-                    player1.inventory.remove("2X damage")
-                    
-                else:
-                    print("You don't have that item")
-
-            case "E":
-                if "Extra life" in player1.inventory:
-                    print("Extra life")
-                    player1.inventory.remove("Extra life")
-                    useExtralife()
-                else:
-                    print("You don't have that item")
-                
-            case "I":     
-                if "Inverter" in player1.inventory:
-                    print("Inverter")
-                    player1.inventory.remove("Inverter")
-                    useInverter()
-                else:
-                    print("You don't have that item")
-        sleepy(3)
-        playerAction(player, bot)
-    
-
-
-    current_shell = chamber[0]
-    switch_turn = True    
-
-    if choice == "self":
-        if current_shell == "live":
-            player.life -= 1
-            print(f"\nBang! The shell was {current_shell.upper()}!")
-            print(f"\n💀 You got hit!")
-            chamber.pop(0)
+        if choice == "item":
+            useItem = input("Select an item by first letter or number (M/E/I/B/2): ").upper()
+            if useItem == "M" and "Metal detector" in player.inventory:
+                player.inventory.remove("Metal detector")
+                useMetalDetector()
+            elif useItem == "B" and "Burner phone" in player.inventory:
+                player.inventory.remove("Burner phone")
+                useBurnerPhone()
+            elif useItem == "2" and "2X damage" in player.inventory:
+                player.inventory.remove("2X damage")
+                print("Double damage activated!")
+            elif useItem == "E" and "Extra life" in player.inventory:
+                player.inventory.remove("Extra life")
+                useExtralife()
+            elif useItem == "I" and "Inverter" in player.inventory:
+                player.inventory.remove("Inverter")
+                useInverter()
+            else:
+                print("You don't have that item or invalid choice.")
+                sleepy(2)
+                continue  # loop again for valid input
             sleepy(2)
-        else:
-            print(f"\nBang! The shell was {current_shell.upper()}!")
-            print("Lucky you")
+            continue  # loop again for player action after using an item
+
+        if choice not in ["self", "dealer"]:
+            print("Invalid choice. Try again.")
             sleepy(2)
-    elif choice == "dealer":
-        if current_shell == "live":
-            bot.life -=  1
-            print(f"\nBang! The shell was {current_shell.upper()}!")
-            print(f"\n💀 {bot.name} got hit!")
-    else:
-        print("Wrong input")
+            continue
+
+        # Shooting logic
+        if not chamber:
+            print("The chamber is empty! Reloading...")
+            chamber.extend(generateChamber(5))
+            displayChamber(chamber)
+            sleepy(2)
+
+        current_shell = chamber.pop(0)
+
+        if choice == "self":
+            if current_shell == "live":
+                player.life -= 1
+                print(f"\nBang! The shell was {current_shell.upper()}! 💀 You got hit!")
+                switch_turn = True
+            else:
+                print(f"\nBang! The shell was {current_shell.upper()}! Click.. Lucky you!")
+                switch_turn = False
+        elif choice == "dealer":
+            if current_shell == "live":
+                bot.life -= 1
+                print(f"\nBang! The shell was {current_shell.upper()}! 💀 {bot.name} got hit!")
+            else:
+                print(f"\nBang! The shell was {current_shell.upper()}! Click..")
+            switch_turn = True
+
+        # Update alive status
+        player.isAlive = player.life > 0
+        bot.isAlive = bot.life > 0
         sleepy(2)
-        playerAction(player, bot)
+        return switch_turn
 
-    # Update alive status
-    if player.life <= 0:
-        player.isAlive = False
-    if bot.life <= 0:
-        bot.isAlive = False
-    return switch_turn
 
 def botAction(bot, player):
+    global chamber
+
+    # === Reload if empty ===
     if not chamber:
         print("The chamber is empty! Reloading...")
         chamber.extend(generateChamber(5))
+        print("New chamber loaded!")
         print("BEWARE!!!  current chamber has ",sorted(chamber))
-        sleepy(3)
+        sleepy(2)
         clear()
 
     displayHealth(bot, player)
 
-    bot_choice = random.choice(["self", 'player'])
+    # === Analyze chamber ===
+    live_count = chamber.count("live")
+    blank_count = chamber.count("blank")
+    total = len(chamber)
+    prob_live = live_count / total if total > 0 else 0
+
+    # === Bot decision logic ===
+    # Add small randomness for realism
+    decision_roll = random.random()
+
+    # Base choice
+    if prob_live < 0.35 and decision_roll < 0.8:
+        bot_choice = "self"   # safer, likely blank
+    elif player.life == 1 and decision_roll < 0.9:
+        bot_choice = "player" # go for the kill
+    else:
+        bot_choice = "player" if prob_live > 0.5 else random.choice(["self", "player"])
+
+    # === Pull the trigger ===
     current_shell = chamber.pop(0)
-    if len(chamber) < 2 and current_shell == 'live':
-        bot_choice = 'player'
     print(f"{bot.name} decides to shoot {bot_choice}!")
+    sleepy(1)
     print(f"\nBang! The shell was {current_shell.upper()}!")
     sleepy(1)
+
     switch = True
 
+    # === Apply result ===
     if current_shell == "live":
         if bot_choice == "self":
             bot.life -= 1
-            print(f"\n💀  Bot got hit!")
+            print("\n💀  Bot got hit!")
         else:
             player.life -= 1
             print(f"\n💀 {player.name} got hit!")
     else:
         print("\nClick... blank shell.")
+        # If bot risks itself and gets a blank, it earns another turn
         if bot_choice == "self":
             switch = False
 
-    # Update alive status
-    if player.life <= 0:
-        player.isAlive = False
-    if bot.life <= 0:
-        bot.isAlive = False
+    # === Update life status ===
+    player.isAlive = player.life > 0
+    bot.isAlive = bot.life > 0
+
     return switch
 
 
@@ -193,20 +230,12 @@ def displayHealth(player, opp):
 
 
 
-def clear():
-    os.system("cls")
 
-def sleepy(x):
-    time.sleep(x)
-
-def Game():
-    name = input("Please enter Name: ")
-    player1 = participant(name)
-    print(f'{player1.name} has {player1.life}lives left')
-    round()
 
 
 # MAIN GAME LOGIC
+player_turn = True  # True = player, False = bot
+
 
 clear()
 print("Welcome to Buckshot roulette")
@@ -234,19 +263,17 @@ if play.lower() == 'y':
 
 
     while player1.isAlive and bot.isAlive:
-        if player1.turn_flag:
-            displayHealth(player1, bot)
-            switch = playerAction(player1, bot)
-            if switch:
-                player1.turn_flag = not player1.turn_flag
-
-            sleepy(1)
+        reloadChamber()
+        if player_turn:
+            switch_turn = playerAction(player1, bot)
         else:
-            displayHealth(bot, player1)
-            switch = botAction(bot,player1)
-            sleepy(3)
-            if switch:
-                player1.turn_flag = not player1.turn_flag
+            switch_turn = botAction(bot, player1)
+
+        # Only flip turn if switch_turn is True
+        if switch_turn:
+            player_turn = not player_turn
+
+    
     
     if  player1.isAlive:
         print("-------YOU WIN!!!!!!----------")
