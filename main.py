@@ -93,6 +93,7 @@ def playerAction(player, bot):
             elif useItem == "2" and "2X damage" in player.inventory:
                 player.inventory.remove("2X damage")
                 print("Double damage activated!")
+                player.useDoubleDamage()
             elif useItem == "E" and "Extra life" in player.inventory:
                 player.inventory.remove("Extra life")
                 useExtralife()
@@ -122,7 +123,7 @@ def playerAction(player, bot):
 
         if choice == "self":
             if current_shell == "live":
-                player.life -= 1
+                player.takeDamage()
                 print(f"\nBang! The shell was {current_shell.upper()}! 💀 You got hit!")
                 switch_turn = True
             else:
@@ -130,7 +131,7 @@ def playerAction(player, bot):
                 switch_turn = False
         elif choice == "dealer":
             if current_shell == "live":
-                bot.life -= 1
+                bot.takeDamage()
                 print(f"\nBang! The shell was {current_shell.upper()}! 💀 {bot.name} got hit!")
             else:
                 print(f"\nBang! The shell was {current_shell.upper()}! Click..")
@@ -168,7 +169,8 @@ def botAction(bot, player):
     decision_roll = random.random()
 
     # Base choice
-    if prob_live < 0.35 and decision_roll < 0.8:
+    # and decision_roll < 0.8
+    if prob_live < 0.35 :
         bot_choice = "self"   # safer, likely blank
     elif player.life == 1 and decision_roll < 0.9:
         bot_choice = "player" # go for the kill
@@ -187,10 +189,10 @@ def botAction(bot, player):
     # === Apply result ===
     if current_shell == "live":
         if bot_choice == "self":
-            bot.life -= 1
+            bot.takeDamage
             print("\n💀  Bot got hit!")
         else:
-            player.life -= 1
+            player.takeDamage
             print(f"\n💀 {player.name} got hit!")
     else:
         print("\nClick... blank shell.")
@@ -214,9 +216,22 @@ class participant:
         self.record = 0
         self.isAlive = True 
         self.turn_flag = True
+        self.doubleDamage = False
  
     def heal(self, amount):
         self.life += amount
+
+    def takeDamage(self):
+        if self.doubleDamage :
+            self.life -= 2
+        else:
+            self.life -= 1
+        self.doubleDamage = False
+    
+    def useDoubleDamage(self):
+        self.doubleDamage = True
+
+
 
 def displayHealth(player, opp):
     clear()
