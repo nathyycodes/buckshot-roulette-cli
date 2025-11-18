@@ -4,10 +4,17 @@ import random
 
 #HELPER FUNCTIONS
 def displayChamber(chamber):
+    """Show bullets as visual icons: 🔫 = live, ⚪ = blank"""
+    visual_chamber = ""
+    for bullet in chamber:
+        if bullet == 'live':
+            visual_chamber += "🔫 "
+        else:
+            visual_chamber += "⚪ "
     live_count = chamber.count('live')
     blank_count = chamber.count('blank')
-    print(f"BEWARE!!! Current chamber contains: {live_count} live bullet(s) and {blank_count} blank(s)")
-
+    print(f"BEWARE!!! Current chamber: {visual_chamber.strip()}")
+    print(f"Live bullets: {live_count}, Blank bullets: {blank_count}")
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -28,6 +35,11 @@ def reloadChamber():
             player1.inventory.extend(new_items)
             print(f"You received new items: {new_items}")
             sleepy(2)
+        if len(bot.inventory) < 5:
+            new_items = generateItems(2)
+            bot.inventory.extend(new_items)
+            print(f"BOT received new items: {new_items}")
+            sleepy(1)
 
 
 # ITEM LOGIC
@@ -77,6 +89,7 @@ def generateChamber(ammo):
 
 def playerAction(player, bot):
     global chamber
+   
     while True:
         displayHealth(player, bot)
         print(f"Your current items: {player.inventory}")
@@ -94,6 +107,7 @@ def playerAction(player, bot):
                 player.inventory.remove("2X damage")
                 print("Double damage activated!")
                 player.useDoubleDamage()
+                bot.useDoubleDamage()
             elif useItem == "E" and "Extra life" in player.inventory:
                 player.inventory.remove("Extra life")
                 useExtralife()
@@ -141,6 +155,8 @@ def playerAction(player, bot):
         player.isAlive = player.life > 0
         bot.isAlive = bot.life > 0
         sleepy(2)
+        player.doubleDamage = False
+        bot.doubleDamage = False
         return switch_turn
 
 
@@ -177,6 +193,11 @@ def botAction(bot, player):
     else:
         bot_choice = "player" if prob_live > 0.5 else random.choice(["self", "player"])
 
+
+
+    #------ ITEM LOGIC --------
+    
+
     # === Pull the trigger ===
     current_shell = chamber.pop(0)
     print(f"{bot.name} decides to shoot {bot_choice}!")
@@ -189,10 +210,10 @@ def botAction(bot, player):
     # === Apply result ===
     if current_shell == "live":
         if bot_choice == "self":
-            bot.takeDamage
+            bot.takeDamage()
             print("\n💀  Bot got hit!")
         else:
-            player.takeDamage
+            player.takeDamage()
             print(f"\n💀 {player.name} got hit!")
     else:
         print("\nClick... blank shell.")
