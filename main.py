@@ -21,8 +21,8 @@ def clear():
 def sleepy(x):
     time.sleep(x)
 
-def reloadChamber():
-    global chamber, player1
+def reloadChamber(player, opponent):
+    global chamber
     if not chamber:
         print("The chamber is empty! Reloading...")
         chamber.extend(generateChamber(5))
@@ -30,21 +30,21 @@ def reloadChamber():
         sleepy(2)
         
         # Give items to player if inventory < 5
-        if len(player1.inventory) < 5:
+        if len(player.inventory) < 5:
             new_items = generateItems(2)
-            player1.inventory.extend(new_items)
+            player.inventory.extend(new_items)
             print(f"You received new items: {new_items}")
             sleepy(2)
-        if len(bot.inventory) < 5:
+        if len(opponent.inventory) < 5:
             new_items = generateItems(2)
-            bot.inventory.extend(new_items)
+            opponent.inventory.extend(new_items)
             print(f"BOT received new items: {new_items}")
             sleepy(1)
 
 
 # ITEM LOGIC
-def useExtralife():
-    player1.heal(1)
+def useExtralife(target):
+    target.heal(1)
 
 def useMetalDetector():
     currentRound = chamber[0]
@@ -110,7 +110,7 @@ def playerAction(player, bot):
                 bot.useDoubleDamage()
             elif useItem == "E" and "Extra life" in player.inventory:
                 player.inventory.remove("Extra life")
-                useExtralife()
+                useExtralife(player)
             elif useItem == "I" and "Inverter" in player.inventory:
                 player.inventory.remove("Inverter")
                 useInverter()
@@ -259,26 +259,70 @@ def displayHealth(player, opp):
     if player.turn_flag:
         print(f"It's {player.name}'s  turn")
     else:
-        print(f"It's {bot.name}'s turn ")
+        print(f"It's {opp.name}'s turn ")
     print("My health : ",'❤️ '*player.life )
     print(f"{opp.name} : ",'❤️ '*opp.life )
 
 
+def MultiplayerMode():
+    print("Multiplayer Mode")
+    global chamber
+
+    firstPlayer = input("Please enter your Name Player 1: ")
+    while firstPlayer == ''.strip():
+        clear()
+        print("Invalid input")
+        sleepy(1.2)
+
+        print("Please enter a valid input")
+        name = input("Please enter Name: ")
+    
+    secondPlayer = input("Please enter your Name Player 1: ")
+    while secondPlayer == ''.strip():
+        clear()
+        print("Invalid input")
+        sleepy(1.2)
+
+        print("Please enter a valid input")
+        name = input("Please enter Name: ")
+
+    player1 = participant(firstPlayer)
+    player2= participant(secondPlayer)
+
+    player1.inventory = generateItems(1)
+    player2.inventory = generateItems(1)
+
+    sleepy(2)
+    clear()
+    chamber = generateChamber(5)
+    print("BEWARE!!!  current chamber has ",sorted(chamber))
+    sleepy(3)
+    player_turn = True
+    
 
 
+    while player1.isAlive and player2.isAlive:
+        reloadChamber(player1, player2)
+        if player_turn:
+            switch_turn = playerAction(player1, player2)
+        else:
+            switch_turn = playerAction(player2, player1)
+
+        # Only flip turn if switch_turn is True
+        if switch_turn:
+            player_turn = not player_turn
+
+    
+    
+    if  player1.isAlive:
+        print("-------YOU WIN!!!!!!----------")
+    else:
+        print("------YOU LOSE!!!------")
 
 
+def singlePlayerMode():
+    global chamber
 
-# MAIN GAME LOGIC
-player_turn = True  # True = player, False = bot
-
-
-clear()
-print("Welcome to Buckshot roulette")
-play = input("Play again bot Y for yes and any other button to quit: ")
-if play.lower() == 'y':
-    sleepy(0.5)
-    print("Let's play some buckshot roulette") 
     name = input("Please enter Name: ")
     while name == ''.strip():
         clear()
@@ -296,10 +340,11 @@ if play.lower() == 'y':
     chamber = generateChamber(5)
     print("BEWARE!!!  current chamber has ",sorted(chamber))
     sleepy(3)
+    player_turn = True
 
 
     while player1.isAlive and bot.isAlive:
-        reloadChamber()
+        reloadChamber(player1, bot)
         if player_turn:
             switch_turn = playerAction(player1, bot)
         else:
@@ -317,7 +362,29 @@ if play.lower() == 'y':
         print("------YOU LOSE!!!------")
 
 
-            
-        
 
+
+
+# MAIN GAME LOGIC
+player_turn = True  # True = player, False = bot
+
+
+clear()
+print("Welcome to Buckshot roulette")
+play = input("Play again bot Y for yes and any other button to quit: ")
+if play.lower() == 'y':
+    sleepy(0.5)
+    print("Let's play some buckshot roulette") 
+    chamber = []
+
+#   GAME MODE SELECT 
+    gameMode = input("Would you  link to play Single player or Multiplayer(single/multiplayer/quit)")
+    if gameMode == 'single':
+        print("Single Player Mode Selected")
+        singlePlayerMode()
+        
+    elif gameMode == 'multiplayer' or gameMode == 'multi':
+        print("Multiplayer mode selected")
+        MultiplayerMode()
+        
 
