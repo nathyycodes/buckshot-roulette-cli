@@ -1,6 +1,8 @@
 import os
 import time
 import random
+import json           # NEW
+from network import Network   # NEW for LAN multiplayer
 
 #HELPER FUNCTIONS
 def displayChamber(chamber):
@@ -319,6 +321,58 @@ def MultiplayerMode():
     else:
         print("------YOU LOSE!!!------")
 
+def LANMultiplayer(is_host, net):
+    global chamber
+
+    name = input("Enter your name: ")
+
+    # Send name to other player
+    net.send({"type": "name", "name": name})
+
+    # Receive opponent's name
+    opp = net.receive()["name"]
+    print(f"Connected to {opp}!")
+
+    me = participant(name)
+    opponent = participant(opp)
+
+    me.inventory = generateItems(1)
+    chamber = generateChamber(5)
+
+    player_turn = is_host   # Host starts the match
+
+    while me.isAlive and opponent.isAlive:
+
+        reloadChamber(me, opponent)
+
+        if player_turn:
+            # local player takes turn
+            switch_turn = playerAction(me, opponent)
+
+            # send the updated game state
+            net.send({
+                "type": "state",
+                "me_life": me.life,
+                "opp_life": opponent.life,
+                "chamber": chamber
+            })
+        else:
+            # wait for opponent action
+            data = net.receive()
+            me.life = data["opp_life"]
+            opponent.life = data["me_life"]
+            chamber = data["chamber"]
+            switch_turn = True  # opponent always passes turn
+
+        if switch_turn:
+            player_turn = not player_turn
+
+    if me.isAlive:
+        print("YOU WIN!")
+    else:
+        print("YOU LOSE!")
+
+
 
 def singlePlayerMode():
     global chamber
@@ -386,5 +440,17 @@ if play.lower() == 'y':
     elif gameMode == 'multiplayer' or gameMode == 'multi':
         print("Multiplayer mode selected")
         MultiplayerMode()
+
+    elif  gameMode == 'lanhost':
+        from network import Network
+        net = Network(host=True)
+        LANMultiplayer(True, net)
+
+    elif gameMode == 'lanclient':
+        from network import Network
+        ip = input("Enter host IP: ")
+        net = Network(server_ip=ip)
+        LANMultiplayer(False, net)
+
         
 
