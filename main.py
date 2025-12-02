@@ -95,7 +95,7 @@ def playerAction(player, bot):
     while True:
         displayHealth(player, bot)
         print(f"Your current items: {player.inventory}")
-        choice = input("Do you want to shoot yourself, the dealer or use an item? (self/dealer/item): ").lower()
+        choice = input("Do you want to shoot yourself, the opponent or use an item? (self/opponent/item): ").lower()
 
         if choice == "item":
             useItem = input("Select an item by first letter or number (M/E/I/B/2): ").upper()
@@ -123,7 +123,7 @@ def playerAction(player, bot):
             sleepy(2)
             continue  # loop again for player action after using an item
 
-        if choice not in ["self", "dealer"]:
+        if choice not in ["self", "opponent"]:
             print("Invalid choice. Try again.")
             sleepy(2)
             continue
@@ -145,7 +145,7 @@ def playerAction(player, bot):
             else:
                 print(f"\nBang! The shell was {current_shell.upper()}! Click.. Lucky you!")
                 switch_turn = False
-        elif choice == "dealer":
+        elif choice == "opponent":
             if current_shell == "live":
                 bot.takeDamage()
                 print(f"\nBang! The shell was {current_shell.upper()}! 💀 {bot.name} got hit!")
@@ -432,7 +432,7 @@ if play.lower() == 'y':
     chamber = []
 
 #   GAME MODE SELECT 
-    gameMode = input("Would you  link to play Single player or Multiplayer(single/multiplayer/quit)")
+    gameMode = input("Would you  link to play Single player or Multiplayer(single/multiplayer/quit): ")
     if gameMode == 'single':
         print("Single Player Mode Selected")
         singlePlayerMode()

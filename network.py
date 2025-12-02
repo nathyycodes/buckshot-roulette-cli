@@ -9,6 +9,7 @@ class Network:
             # Host mode
             self.sock.bind(("0.0.0.0", port))
             self.sock.listen()
+            print(f'To connect join the{server_ip}')
             print(f"[HOST] Waiting for player on port {port}...")
             self.conn, self.addr = self.sock.accept()
             print(f"[CONNECTED] Player joined from {self.addr}")
